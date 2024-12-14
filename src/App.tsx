@@ -1,7 +1,14 @@
 import { useEffect, useState } from "react";
 import "./App.css";
 import axios from "axios";
-import { List, ResultPage, ErrorBlock } from "antd-mobile";
+import {
+  List,
+  ResultPage,
+  ErrorBlock,
+  Card,
+  Image,
+  ImageViewer,
+} from "antd-mobile";
 
 interface IRes {
   code: number;
@@ -15,6 +22,7 @@ interface IData {
   productName: string;
   usedSum: number;
   usedTime: string;
+  imgUrl: string[];
 }
 
 enum IStatus {
@@ -27,6 +35,9 @@ function App() {
   const [detail, setDetail] =
     useState<{ label: string; value: string; bold?: boolean }[]>();
   const [status, setStatus] = useState<IStatus>(IStatus.等待);
+  const [imgList, setImgList] = useState<string[]>([]);
+  const [imgModal, setImgModal] = useState<boolean>(false);
+
   useEffect(() => {
     async function fetch() {
       try {
@@ -47,6 +58,7 @@ function App() {
               value: res.data.usedSum.toString(),
             },
           ]);
+          setImgList(res.data.imgUrl ?? []);
         }
       } catch (error) {
         setStatus(IStatus.失败);
@@ -79,16 +91,30 @@ function App() {
       }
     >
       {status === IStatus.成功 ? (
-        <ResultPage.Card style={{ padding: "20px" }}>
-          {detail &&
-            detail?.map((item) => {
-              return (
-                <List>
-                  <List.Item extra={item.value}>{item.label}</List.Item>
-                </List>
-              );
-            })}
-        </ResultPage.Card>
+        <>
+          <ResultPage.Card style={{ padding: "20px" }}>
+            {detail &&
+              detail?.map((item) => {
+                return (
+                  <List>
+                    <List.Item extra={item.value}>{item.label}</List.Item>
+                  </List>
+                );
+              })}
+          </ResultPage.Card>
+          {imgList.length > 0 && (
+            <Card title="描述图片" style={{ marginTop: "20px" }}>
+              {imgList.map((item) => {
+                return <Image src={item} onClick={() => setImgModal(true)} />;
+              })}
+            </Card>
+          )}
+          <ImageViewer.Multi
+            images={imgList}
+            visible={imgModal}
+            onClose={() => setImgModal(false)}
+          />
+        </>
       ) : status === IStatus.失败 ? (
         <ErrorBlock
           title=""
